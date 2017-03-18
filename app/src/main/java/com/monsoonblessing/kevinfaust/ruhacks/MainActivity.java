@@ -218,6 +218,13 @@ public class MainActivity extends AppCompatActivity {
                                                         // calculate time inside (in seconds)
                                                         long timeSpent = (System.currentTimeMillis() - vehicle.getTimeIn()) / 1000;
                                                         double amountCharged = ((double) timeSpent / 60) / 60 * lot.getHourlyCharge();
+
+                                                        /**
+                                                         *
+                                                         * CHARGE CREDIT CARD
+                                                         *
+                                                         */
+
                                                         // display to screen
                                                         Log.d(TAG, "Time spent: " + timeSpent);
                                                         Log.d(TAG, "Amount charged: " + amountCharged);
