@@ -72,9 +72,7 @@ public class MainActivity extends AppCompatActivity {
     private String licensePlate;
     private Double ocrAccuracy;
 
-    // THIS DETERMINES HOW MUCH WE CHARGE THEM
-    private double parkingRatePerHour = 5.00;
-
+    // contains stuff related to parking lot like available spots and price
     private Lot lot;
 
     @Override
@@ -196,7 +194,7 @@ public class MainActivity extends AppCompatActivity {
                                     licensePlate = results.getResults().get(0).getPlate();
                                     ocrAccuracy = results.getResults().get(0).getConfidence();
 
-                                    licensePlateText.setText("License Plate: " + licensePlate + "\nAccuracy: " + ocrAccuracy);
+                                    licensePlateText.setText("License Plate: " + licensePlate + "\nAccuracy: " +  String.format("%.2f", ocrAccuracy));
 
                                     // check if we have this license in our system or not
                                     vehiclesDatabase.addListenerForSingleValueEvent(new ValueEventListener() {
@@ -215,7 +213,7 @@ public class MainActivity extends AppCompatActivity {
                                                         Vehicle vehicle = dataSnapshot.getValue(Vehicle.class);
                                                         // calculate time inside (in seconds)
                                                         long timeSpent = (System.currentTimeMillis() - vehicle.getTimeIn()) / 1000;
-                                                        double amountCharged = ((double) timeSpent / 60) / 60 * parkingRatePerHour;
+                                                        double amountCharged = ((double) timeSpent / 60) / 60 * lot.getHourlyCharge();
                                                         // display to screen
                                                         Log.d(TAG, "Time spent: " + timeSpent);
                                                         Log.d(TAG, "Amount charged: " + amountCharged);
