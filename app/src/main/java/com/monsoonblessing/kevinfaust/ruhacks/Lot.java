@@ -6,7 +6,7 @@ package com.monsoonblessing.kevinfaust.ruhacks;
 
 public class Lot {
 
-    private int lotNumber;
+    private long lotNumber;
     private int availableSpots;
     private int maxSpots;
     private double hourlyCharge;
@@ -14,11 +14,11 @@ public class Lot {
     public Lot() {
     }
 
-    public int getLotNumber() {
+    public long getLotNumber() {
         return lotNumber;
     }
 
-    public void setLotNumber(int lotNumber) {
+    public void setLotNumber(long lotNumber) {
         this.lotNumber = lotNumber;
     }
 
