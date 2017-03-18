@@ -3,12 +3,15 @@ package com.monsoonblessing.kevinfaust.ruhacks;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
-import android.support.annotation.IntegerRes;
 import android.support.v7.app.AppCompatActivity;
+import android.widget.EditText;
 import android.widget.TextView;
 
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
@@ -20,14 +23,17 @@ public class RegistrationActivity extends AppCompatActivity {
     TextView maxSpotsTextView;
     @BindView(R.id.hourly_price_text)
     TextView hourlyPriceTextView;
+    @BindView(R.id.join_lot_text)
+    EditText joinLotText;
 
     private DatabaseReference parkingLotDatabase;
 
-    // hardcoded number for this lot
-    public static int LOT_NUMBER = 11;
+    // next lot number
+    private long nextLotNumber;
 
     private SharedPreferences mSharedPreferences;
     private SharedPreferences.Editor mEditor;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -44,6 +50,18 @@ public class RegistrationActivity extends AppCompatActivity {
         if (mSharedPreferences.getString("lot_number", null) != null) {
             launchMain();
         }
+
+
+        parkingLotDatabase.addListenerForSingleValueEvent(new ValueEventListener() {
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                nextLotNumber = dataSnapshot.getChildrenCount() + 1;
+            }
+
+            public void onCancelled(DatabaseError databaseError) {
+            }
+        });
+
+
     }
 
     @OnClick(R.id.save_button)
@@ -56,13 +74,13 @@ public class RegistrationActivity extends AppCompatActivity {
             Lot l = new Lot();
             l.setAvailableSpots(Integer.parseInt(spots));
             l.setHourlyCharge(Double.parseDouble(price));
-            l.setLotNumber(LOT_NUMBER);
+            l.setLotNumber(nextLotNumber);
             l.setMaxSpots(Integer.parseInt(spots));
 
             // save lot
-            parkingLotDatabase.child(String.valueOf(LOT_NUMBER)).setValue(l);
+            parkingLotDatabase.child(String.valueOf(nextLotNumber)).setValue(l);
 
-            mEditor.putString("lot_number", "temp");
+            mEditor.putString("lot_number", String.valueOf(nextLotNumber));
             mEditor.apply();
 
             launchMain();
@@ -73,5 +91,14 @@ public class RegistrationActivity extends AppCompatActivity {
         Intent i = new Intent(RegistrationActivity.this, MainActivity.class);
         startActivity(i);
         finish();
+    }
+
+    @OnClick(R.id.join_lot_btn)
+    void onJoinLotButton() {
+        if (joinLotText.getText().toString().length() != 0) {
+            mEditor.putString("lot_number", joinLotText.getText().toString());
+            mEditor.apply();
+            launchMain();
+        }
     }
 }

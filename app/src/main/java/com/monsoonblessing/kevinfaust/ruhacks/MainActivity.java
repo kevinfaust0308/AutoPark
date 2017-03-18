@@ -3,6 +3,7 @@ package com.monsoonblessing.kevinfaust.ruhacks;
 import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.AsyncTask;
@@ -72,9 +73,7 @@ public class MainActivity extends AppCompatActivity {
     private String licensePlate;
     private Double ocrAccuracy;
 
-    // THIS DETERMINES HOW MUCH WE CHARGE THEM
-    private double parkingRatePerHour = 5.00;
-
+    // contains stuff related to parking lot like available spots and price
     private Lot lot;
 
     @Override
@@ -83,6 +82,9 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         ButterKnife.bind(this);
 
+        SharedPreferences sharedPreferences = getSharedPreferences("SmartPark", MODE_PRIVATE);
+        String lotNumber = sharedPreferences.getString("lot_number", null);
+
         // stuff for license recognition
         ANDROID_DATA_DIR = this.getApplicationInfo().dataDir;
         openAlprConfFile = ANDROID_DATA_DIR + File.separatorChar + "runtime_data" + File.separatorChar + "openalpr.conf";
@@ -90,7 +92,7 @@ public class MainActivity extends AppCompatActivity {
         // create two database references
         DatabaseReference database = FirebaseDatabase.getInstance().getReference();
         vehiclesDatabase = database.child("vehicles");
-        parkingLotDatabase = database.child("lots").child(String.valueOf(RegistrationActivity.LOT_NUMBER));
+        parkingLotDatabase = database.child("lots").child(lotNumber);
 
         // dynamic updating lot space text
         parkingLotDatabase.addValueEventListener(new ValueEventListener() {
@@ -196,7 +198,7 @@ public class MainActivity extends AppCompatActivity {
                                     licensePlate = results.getResults().get(0).getPlate();
                                     ocrAccuracy = results.getResults().get(0).getConfidence();
 
-                                    licensePlateText.setText("License Plate: " + licensePlate + "\nAccuracy: " + ocrAccuracy);
+                                    licensePlateText.setText("License Plate: " + licensePlate + "\nAccuracy: " + String.format("%.2f", ocrAccuracy));
 
                                     // check if we have this license in our system or not
                                     vehiclesDatabase.addListenerForSingleValueEvent(new ValueEventListener() {
@@ -215,7 +217,7 @@ public class MainActivity extends AppCompatActivity {
                                                         Vehicle vehicle = dataSnapshot.getValue(Vehicle.class);
                                                         // calculate time inside (in seconds)
                                                         long timeSpent = (System.currentTimeMillis() - vehicle.getTimeIn()) / 1000;
-                                                        double amountCharged = ((double) timeSpent / 60) / 60 * parkingRatePerHour;
+                                                        double amountCharged = ((double) timeSpent / 60) / 60 * lot.getHourlyCharge();
                                                         // display to screen
                                                         Log.d(TAG, "Time spent: " + timeSpent);
                                                         Log.d(TAG, "Amount charged: " + amountCharged);
