@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>AutoPark</title>
+    <script></script>
+  </head>
+  <body>
+    <h1><span id="gate">Closed</span></h1>
+    <script src="https://www.gstatic.com/firebasejs/3.7.1/firebase.js"></script>
+<script>
+  // Initialize Firebase
+  // TODO: Replace with your project's customized code snippet
+  var config = {
+    apiKey: "AIzaSyBCf8oFIoeKjJiEfML-5P7ZSy6zv_wbwFk",
+    databaseURL: "https://smartpark-19818.firebaseio.com"
+  };
+  firebase.initializeApp(config);
+</script>
+<script>
+
+var starCountRef = firebase.database().ref('vehicles');
+starCountRef.on('value', function(snapshot) {
+  // updateStarCount(postElement, snapshot.val());
+
+    document.getElementById('gate').innerHTML = "Open"
+    setTimeout(function closeGate() {
+      document.getElementById('gate').innerHTML = "Closed"
+    }, 10000);
+});
+</script>
+  </body>
+</html>
