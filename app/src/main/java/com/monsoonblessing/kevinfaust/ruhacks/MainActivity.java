@@ -109,9 +109,9 @@ public class MainActivity extends AppCompatActivity {
                 int maximumSpots = lot.getMaxSpots();
                 lotAvailabilityTextView.setText("Lot availability: " + availableSpots + " / " + maximumSpots);
 
-                if (availableSpots/maximumSpots >= 0.60) {
+                if (((float) availableSpots/maximumSpots) >= 0.60) {
                     lotAvailabilityTextView.setTextColor(ContextCompat.getColor(MainActivity.this, R.color.md_green_300));
-                } else if (availableSpots/maximumSpots >= 0.20) {
+                } else if (((float) availableSpots/maximumSpots) >= 0.20) {
                     lotAvailabilityTextView.setTextColor(ContextCompat.getColor(MainActivity.this, R.color.md_orange_500));
                 } else {
                     lotAvailabilityTextView.setTextColor(ContextCompat.getColor(MainActivity.this, R.color.md_red_600));
