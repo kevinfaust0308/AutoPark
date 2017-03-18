@@ -10,6 +10,7 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Environment;
 import android.provider.MediaStore;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
@@ -104,7 +105,17 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
                 lot = dataSnapshot.getValue(Lot.class);
-                lotAvailabilityTextView.setText("Lot availability: " + lot.getAvailableSpots() + " / " + lot.getMaxSpots());
+                int availableSpots = lot.getAvailableSpots();
+                int maximumSpots = lot.getMaxSpots();
+                lotAvailabilityTextView.setText("Lot availability: " + availableSpots + " / " + maximumSpots);
+
+                if (availableSpots/maximumSpots >= 0.60) {
+                    lotAvailabilityTextView.setTextColor(ContextCompat.getColor(MainActivity.this, R.color.md_green_300));
+                } else if (availableSpots/maximumSpots >= 0.20) {
+                    lotAvailabilityTextView.setTextColor(ContextCompat.getColor(MainActivity.this, R.color.md_orange_500));
+                } else {
+                    lotAvailabilityTextView.setTextColor(ContextCompat.getColor(MainActivity.this, R.color.md_red_600));
+                }
             }
 
             @Override

@@ -12,9 +12,9 @@
     tools:context="com.monsoonblessing.kevinfaust.ruhacks.MainActivity">
 
     <FrameLayout
-        android:layout_margin="10dp"
-        android:layout_width="300dp"
-        android:layout_height="200dp">
+        android:layout_width="280dp"
+        android:layout_height="195dp"
+        android:layout_margin="10dp">
 
         <ImageView
             android:id="@+id/license_image"
