@@ -11,21 +11,33 @@
     android:orientation="vertical"
     tools:context="com.monsoonblessing.kevinfaust.ruhacks.MainActivity">
 
-    <TextView
-        android:id="@+id/textView2"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:padding="15dp"
-        android:text="License Plate"
-        android:textColor="@color/md_white_1000"
-        android:textSize="17sp"/>
-
-    <ImageView
-        android:id="@+id/license_image"
+    <FrameLayout
+        android:layout_margin="10dp"
         android:layout_width="300dp"
-        android:layout_height="200dp"
-        android:scaleType="centerInside"
-        app:srcCompat="@drawable/placeholder"/>
+        android:layout_height="200dp">
+
+        <ImageView
+            android:id="@+id/license_image"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:scaleType="centerInside"
+            app:srcCompat="@drawable/placeholder"/>
+
+        <View
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="@drawable/gradient"/>
+
+        <TextView
+            android:id="@+id/textView2"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:padding="10dp"
+            android:text="License Plate"
+            android:textColor="@color/md_white_1000"
+            android:textSize="17sp"/>
+    </FrameLayout>
+
 
     <ImageButton
         android:id="@+id/process_license_plate"
@@ -67,9 +79,9 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:ems="10"
-                android:maxLines="1"
                 android:hint="Credit card number"
                 android:inputType="number"
+                android:maxLines="1"
                 android:textColor="@color/md_white_1000"
                 android:textColorHint="@color/md_white_1000"/>
 
@@ -79,23 +91,23 @@
                 android:orientation="horizontal">
 
                 <EditText
-                    android:maxLength="5"
                     android:id="@+id/expiryDateText"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:hint="mm/yy"
+                    android:maxLength="5"
                     android:textColor="@color/md_white_1000"
                     android:textColorHint="@color/md_white_1000"/>
 
                 <EditText
-                    android:maxLength="3"
                     android:id="@+id/CVVText"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:hint="CVV"
                     android:inputType="number"
+                    android:maxLength="3"
                     android:textColor="@color/md_white_1000"
                     android:textColorHint="@color/md_white_1000"/>
 
