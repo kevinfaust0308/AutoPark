@@ -7,7 +7,7 @@ package com.monsoonblessing.kevinfaust.ruhacks;
 public class Vehicle {
 
     private String plateNumber;
-    private int creditCard;
+    private CreditCard creditCard;
     private long timeIn;
     private Long timeOut;
     private Double ocrAccuracy;
@@ -23,11 +23,11 @@ public class Vehicle {
         this.timeIn = timeIn;
     }
 
-    public int getCreditCard() {
+    public CreditCard getCreditCard() {
         return creditCard;
     }
 
-    public void setCreditCard(int creditCard) {
+    public void setCreditCard(CreditCard creditCard) {
         this.creditCard = creditCard;
     }
 

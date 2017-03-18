@@ -54,6 +54,8 @@
         android:textSize="20sp"/>
 
     <EditText
+        android:inputType="number"
+        android:maxLines="1"
         android:textColorHint="@color/md_white_1000"
         android:textColor="@color/md_white_1000"
         android:id="@+id/max_spots_text"
@@ -63,6 +65,8 @@
         android:padding="10dp"/>
 
     <EditText
+        android:inputType="numberDecimal"
+        android:maxLines="1"
         android:textColorHint="@color/md_white_1000"
         android:textColor="@color/md_white_1000"
         android:id="@+id/hourly_price_text"
@@ -91,6 +95,8 @@
         android:textSize="20sp"/>
 
     <EditText
+        android:inputType="number"
+        android:maxLines="1"
         android:textColorHint="@color/md_white_1000"
         android:textColor="@color/md_white_1000"
         android:id="@+id/join_lot_text"

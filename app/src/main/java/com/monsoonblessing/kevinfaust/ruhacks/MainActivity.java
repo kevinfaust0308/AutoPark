@@ -13,6 +13,7 @@ import android.provider.MediaStore;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
+import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -66,6 +67,10 @@ public class MainActivity extends AppCompatActivity {
     TextView licensePlateText;
     @BindView(R.id.lot_availability_text)
     TextView lotAvailabilityTextView;
+    @BindView(R.id.CVVText)
+    EditText cvvText;
+    @BindView(R.id.expiryDateText)
+    EditText expiryDateText;
 
     private DatabaseReference vehiclesDatabase;
     private DatabaseReference parkingLotDatabase;
@@ -140,17 +145,28 @@ public class MainActivity extends AppCompatActivity {
             Toast.makeText(this, "No spots available", Toast.LENGTH_SHORT).show();
         } else {
 
+            // get credit card number, expiry, and cvv numbers
+            String creditCardNum = creditCardTextView.getText().toString();
+            String expiryDate = expiryDateText.getText().toString();
+            String cvvNum = cvvText.getText().toString();
+
             // make sure credit card field not blank
-            if (creditCardTextView.getText().length() != 0) {
+            if (creditCardNum.length() != 0 && expiryDate.length() != 0 && cvvNum.length() != 0) {
                 // verify credit card is legit ...
                 Toast.makeText(this, "Making sure card is valid ...", Toast.LENGTH_SHORT).show();
                 Toast.makeText(this, "It is valid", Toast.LENGTH_SHORT).show();
+
+                // create new credit card object
+                CreditCard card = new CreditCard();
+                card.setCardNumber(Integer.parseInt(creditCardNum));
+                card.setCardExpiry(expiryDate);
+                card.setCardSecurityNumber(Integer.parseInt(cvvNum));
 
                 // create new vehicle object and store in database
                 Vehicle v = new Vehicle();
                 v.setPlateNumber(licensePlate);
                 v.setOcrAccuracy(ocrAccuracy);
-                v.setCreditCard(Integer.parseInt(creditCardTextView.getText().toString()));
+                v.setCreditCard(card);
                 v.setTimeIn(System.currentTimeMillis());
                 v.setTimeOut(null);
                 vehiclesDatabase.child(licensePlate).setValue(v);
@@ -168,7 +184,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (requestCode == REQUEST_IMAGE && resultCode == Activity.RESULT_OK) {
-            final ProgressDialog progress = ProgressDialog.show(this, "Loading", "Parsing result...", true);
+            final ProgressDialog progress = ProgressDialog.show(this, "Loading", "Processing license...", true);
 
             BitmapFactory.Options options = new BitmapFactory.Options();
             options.inSampleSize = 10;
@@ -219,6 +235,8 @@ public class MainActivity extends AppCompatActivity {
                                                         long timeSpent = (System.currentTimeMillis() - vehicle.getTimeIn()) / 1000;
                                                         double amountCharged = ((double) timeSpent / 60) / 60 * lot.getHourlyCharge();
 
+
+                                                        CreditCard card = vehicle.getCreditCard();
                                                         /**
                                                          *
                                                          * CHARGE CREDIT CARD
