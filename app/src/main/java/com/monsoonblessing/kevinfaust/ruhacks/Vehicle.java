@@ -1,23 +1,20 @@
 package com.monsoonblessing.kevinfaust.ruhacks;
 
-import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBAttribute;
-import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBHashKey;
-import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBTable;
-
 /**
  * Created by Kevin Faust on 3/18/2017.
  */
 
-@DynamoDBTable(tableName = "Vehicle")
 public class Vehicle {
 
     private String plateNumber;
     private int creditCard;
     private long timeIn;
     private Long timeOut;
+    private Double ocrAccuracy;
 
+    public Vehicle() {
+    }
 
-    @DynamoDBAttribute(attributeName = "TimeIn")
     public long getTimeIn() {
         return timeIn;
     }
@@ -26,7 +23,6 @@ public class Vehicle {
         this.timeIn = timeIn;
     }
 
-    @DynamoDBAttribute(attributeName = "CreditCard")
     public int getCreditCard() {
         return creditCard;
     }
@@ -35,7 +31,6 @@ public class Vehicle {
         this.creditCard = creditCard;
     }
 
-    @DynamoDBAttribute(attributeName = "TimeOut")
     public Long getTimeOut() {
         return timeOut;
     }
@@ -44,7 +39,6 @@ public class Vehicle {
         this.timeOut = timeOut;
     }
 
-    @DynamoDBHashKey(attributeName = "PlateNumber")
     public String getPlateNumber() {
         return plateNumber;
     }
@@ -53,5 +47,12 @@ public class Vehicle {
         this.plateNumber = plateNumber;
     }
 
+    public Double getOcrAccuracy() {
+        return ocrAccuracy;
+    }
+
+    public void setOcrAccuracy(Double ocrAccuracy) {
+        this.ocrAccuracy = ocrAccuracy;
+    }
 }
 
