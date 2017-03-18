@@ -4,39 +4,42 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@drawable/background"
     android:orientation="vertical"
     android:padding="25dp"
     tools:context="com.monsoonblessing.kevinfaust.ruhacks.RegistrationActivity">
 
     <LinearLayout
-        android:gravity="center"
         android:layout_width="match_parent"
-        android:orientation="horizontal"
-        android:layout_height="wrap_content">
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:orientation="horizontal">
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:paddingTop="10dp"
             android:paddingBottom="10dp"
-            android:paddingRight="3dp"
             android:paddingLeft="10dp"
+            android:paddingRight="3dp"
+            android:paddingTop="10dp"
             android:text="Welcome to Smart"
+            android:textColor="@color/md_white_1000"
             android:textSize="25sp"/>
 
         <ImageView
             android:layout_width="wrap_content"
-            android:src="@drawable/parking"
-            android:layout_height="wrap_content"/>
+            android:layout_height="wrap_content"
+            android:src="@drawable/parking"/>
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:paddingTop="10dp"
             android:paddingBottom="10dp"
-            android:paddingRight="10dp"
             android:paddingLeft="3dp"
+            android:paddingRight="10dp"
+            android:paddingTop="10dp"
             android:text="ark"
+            android:textColor="@color/md_white_1000"
             android:textSize="25sp"/>
 
     </LinearLayout>
@@ -47,9 +50,12 @@
         android:layout_height="wrap_content"
         android:padding="10dp"
         android:text="Create new lot"
+        android:textColor="@color/md_white_1000"
         android:textSize="20sp"/>
 
     <EditText
+        android:textColorHint="@color/md_white_1000"
+        android:textColor="@color/md_white_1000"
         android:id="@+id/max_spots_text"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -57,6 +63,8 @@
         android:padding="10dp"/>
 
     <EditText
+        android:textColorHint="@color/md_white_1000"
+        android:textColor="@color/md_white_1000"
         android:id="@+id/hourly_price_text"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -69,8 +77,9 @@
         android:layout_height="wrap_content"
         android:layout_gravity="center_horizontal"
         android:layout_margin="15dp"
-        android:background="@color/md_blue_grey_100"
-        android:text="Save"/>
+        android:background="@drawable/round_button"
+        android:padding="5dp"
+        android:text="create lot"/>
 
 
     <TextView
@@ -78,9 +87,12 @@
         android:layout_height="wrap_content"
         android:padding="10dp"
         android:text="Or join a lot"
+        android:textColor="@color/md_white_1000"
         android:textSize="20sp"/>
 
     <EditText
+        android:textColorHint="@color/md_white_1000"
+        android:textColor="@color/md_white_1000"
         android:id="@+id/join_lot_text"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -92,7 +104,7 @@
         android:layout_height="wrap_content"
         android:layout_gravity="center_horizontal"
         android:layout_margin="15dp"
-        android:background="@color/md_blue_grey_100"
+        android:background="@drawable/round_button"
         android:text="Join Lot"/>
 
 </LinearLayout>
