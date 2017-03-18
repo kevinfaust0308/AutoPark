@@ -11,11 +11,14 @@ import android.os.Environment;
 import android.provider.MediaStore;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
-import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.amazonaws.auth.CognitoCachingCredentialsProvider;
+import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBMapper;
+import com.amazonaws.regions.Regions;
+import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
 import com.squareup.picasso.Picasso;
@@ -31,6 +34,7 @@ import java.util.Locale;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
+import butterknife.OnClick;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -43,6 +47,10 @@ public class MainActivity extends AppCompatActivity {
     TextView resultTextView;
     @BindView(R.id.license_image)
     ImageView imageView;
+    @BindView(R.id.creditCardText)
+    TextView creditCardTextView;
+
+    private DynamoDBMapper mapper;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -55,21 +63,45 @@ public class MainActivity extends AppCompatActivity {
         openAlprConfFile = ANDROID_DATA_DIR + File.separatorChar + "runtime_data" + File.separatorChar + "openalpr.conf";
 
 
-        findViewById(R.id.take_picture).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                // check if we have storage permission
-                if (!PermissionManager.hasStoragePermission(MainActivity.this)) {
-                    PermissionManager.requestPermission(MainActivity.this, PermissionManager.STORAGE_PERMISSION, PermissionManager.PERMISSION_STORAGE_CODE);
-                // check if we have camera permission
-                } else if (!PermissionManager.hasCameraPermission(MainActivity.this)) {
-                    PermissionManager.requestPermission(MainActivity.this, PermissionManager.CAMERA_PERMISSION, PermissionManager.PERMISSION_CAMERA_CODE);
-                } else {
-                    takePicture();
-                }
-            }
-        });
+        // Initialize the Amazon Cognito credentials provider
+        CognitoCachingCredentialsProvider credentialsProvider = new CognitoCachingCredentialsProvider(
+                getApplicationContext(),
+                "us-west-2:3d91c865-8a4a-437a-8816-ae5e9c8578a1", // Identity Pool ID
+                Regions.US_WEST_2 // Region
+        );
+        AmazonDynamoDBClient ddbClient = new AmazonDynamoDBClient(credentialsProvider);
+        mapper = new DynamoDBMapper(ddbClient);
+    }
 
+//    @OnClick(R.id.take_picture)
+//    void onTakePicture() {
+//        // check if we have storage permission
+//        if (!PermissionManager.hasStoragePermission(MainActivity.this)) {
+//            PermissionManager.requestPermission(MainActivity.this, PermissionManager.STORAGE_PERMISSION, PermissionManager.PERMISSION_STORAGE_CODE);
+//            // check if we have camera permission
+//        } else if (!PermissionManager.hasCameraPermission(MainActivity.this)) {
+//            PermissionManager.requestPermission(MainActivity.this, PermissionManager.CAMERA_PERMISSION, PermissionManager.PERMISSION_CAMERA_CODE);
+//        } else {
+//            takePicture();
+//        }
+//    }
+
+    @OnClick(R.id.verifyCreditCard)
+    void onVerifyCreditCard() {
+        // make sure credit card field not blank
+        if (creditCardTextView.getText().length() != 0) {
+            // verify credit card is legit ...
+
+            // check if we have storage permission and proceed to take picture
+            if (!PermissionManager.hasStoragePermission(MainActivity.this)) {
+                PermissionManager.requestPermission(MainActivity.this, PermissionManager.STORAGE_PERMISSION, PermissionManager.PERMISSION_STORAGE_CODE);
+                // check if we have camera permission
+            } else if (!PermissionManager.hasCameraPermission(MainActivity.this)) {
+                PermissionManager.requestPermission(MainActivity.this, PermissionManager.CAMERA_PERMISSION, PermissionManager.PERMISSION_CAMERA_CODE);
+            } else {
+                takePicture();
+            }
+        }
     }
 
     @Override
