@@ -13,9 +13,15 @@ import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
 import com.squareup.picasso.Picasso;
@@ -31,10 +37,12 @@ import java.util.Locale;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
+import butterknife.OnClick;
 
 public class MainActivity extends AppCompatActivity {
 
     private static final int REQUEST_IMAGE = 100;
+    private static final String TAG = MainActivity.class.getSimpleName();
     private String ANDROID_DATA_DIR;
     private String openAlprConfFile;
     private static File destination;
@@ -43,6 +51,31 @@ public class MainActivity extends AppCompatActivity {
     TextView resultTextView;
     @BindView(R.id.license_image)
     ImageView imageView;
+    @BindView(R.id.creditCardText)
+    TextView creditCardTextView;
+    @BindView(R.id.credit_card_prompt_layout)
+    LinearLayout creditCardLayoutPromptLinearLayout;
+    @BindView(R.id.time_spent_report)
+    LinearLayout timeSpentReportLinearLayout;
+    @BindView(R.id.timeSpent)
+    TextView timeSpentText;
+    @BindView(R.id.costCharged)
+    TextView costChargedText;
+    @BindView(R.id.textView2)
+    TextView licensePlateText;
+    @BindView(R.id.lot_availability_text)
+    TextView lotAvailabilityTextView;
+
+    private DatabaseReference vehiclesDatabase;
+    private DatabaseReference parkingLotDatabase;
+
+    private String licensePlate;
+    private Double ocrAccuracy;
+
+    // THIS DETERMINES HOW MUCH WE CHARGE THEM
+    private double parkingRatePerHour = 5.00;
+
+    private Lot lot;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -54,22 +87,80 @@ public class MainActivity extends AppCompatActivity {
         ANDROID_DATA_DIR = this.getApplicationInfo().dataDir;
         openAlprConfFile = ANDROID_DATA_DIR + File.separatorChar + "runtime_data" + File.separatorChar + "openalpr.conf";
 
+        // create two database references
+        DatabaseReference database = FirebaseDatabase.getInstance().getReference();
+        vehiclesDatabase = database.child("vehicles");
+        parkingLotDatabase = database.child("lots").child(String.valueOf(RegistrationActivity.LOT_NUMBER));
 
-        findViewById(R.id.take_picture).setOnClickListener(new View.OnClickListener() {
+        // dynamic updating lot space text
+        parkingLotDatabase.addValueEventListener(new ValueEventListener() {
             @Override
-            public void onClick(View view) {
-                // check if we have storage permission
-                if (!PermissionManager.hasStoragePermission(MainActivity.this)) {
-                    PermissionManager.requestPermission(MainActivity.this, PermissionManager.STORAGE_PERMISSION, PermissionManager.PERMISSION_STORAGE_CODE);
-                // check if we have camera permission
-                } else if (!PermissionManager.hasCameraPermission(MainActivity.this)) {
-                    PermissionManager.requestPermission(MainActivity.this, PermissionManager.CAMERA_PERMISSION, PermissionManager.PERMISSION_CAMERA_CODE);
-                } else {
-                    takePicture();
-                }
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                lot = dataSnapshot.getValue(Lot.class);
+                lotAvailabilityTextView.setText("Lot availability: " + lot.getAvailableSpots() + " / " + lot.getMaxSpots());
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+
             }
         });
 
+        // check if we have storage permission and proceed to take picture
+        if (!PermissionManager.hasStoragePermission(MainActivity.this)) {
+            PermissionManager.requestPermission(MainActivity.this, PermissionManager.STORAGE_PERMISSION, PermissionManager.PERMISSION_STORAGE_CODE);
+            finish();
+            // check if we have camera permission
+        } else if (!PermissionManager.hasCameraPermission(MainActivity.this)) {
+            PermissionManager.requestPermission(MainActivity.this, PermissionManager.CAMERA_PERMISSION, PermissionManager.PERMISSION_CAMERA_CODE);
+            finish();
+        }
+
+    }
+
+    // PROCESS LICENSE PLATE BUTTON
+    @OnClick(R.id.process_license_plate)
+    void onProcessLicensePlate() {
+        // make layout fresh
+        licensePlateText.setText("License Plate");
+        creditCardLayoutPromptLinearLayout.setVisibility(View.GONE);
+        timeSpentReportLinearLayout.setVisibility(View.GONE);
+
+        // take picture of license plate and see whether car is leaving or entering
+        takePicture();
+    }
+
+    @OnClick(R.id.verifyCreditCard)
+    void onVerifyCreditCard() {
+
+        // check if spots open
+        if (lot.getAvailableSpots() == 0) {
+            Toast.makeText(this, "No spots available", Toast.LENGTH_SHORT).show();
+        } else {
+
+            // make sure credit card field not blank
+            if (creditCardTextView.getText().length() != 0) {
+                // verify credit card is legit ...
+                Toast.makeText(this, "Making sure card is valid ...", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, "It is valid", Toast.LENGTH_SHORT).show();
+
+                // create new vehicle object and store in database
+                Vehicle v = new Vehicle();
+                v.setPlateNumber(licensePlate);
+                v.setOcrAccuracy(ocrAccuracy);
+                v.setCreditCard(Integer.parseInt(creditCardTextView.getText().toString()));
+                v.setTimeIn(System.currentTimeMillis());
+                v.setTimeOut(null);
+                vehiclesDatabase.child(licensePlate).setValue(v);
+                Toast.makeText(MainActivity.this, "Successfully registered license in system", Toast.LENGTH_SHORT).show();
+
+                // valid credit card given so we can now hide the prompt
+                creditCardLayoutPromptLinearLayout.setVisibility(View.GONE);
+
+                // subtract an available spot
+                decreaseSpaceAvailability();
+            }
+        }
     }
 
     @Override
@@ -89,8 +180,6 @@ public class MainActivity extends AppCompatActivity {
                 public void run() {
                     String result = OpenALPR.Factory.create(MainActivity.this, ANDROID_DATA_DIR).recognizeWithCountryRegionNConfig("us", "", destination.getAbsolutePath(), openAlprConfFile, 10);
 
-                    Log.d("OPEN ALPR", result);
-
                     try {
                         final Results results = new Gson().fromJson(result, Results.class);
                         runOnUiThread(new Runnable() {
@@ -98,13 +187,68 @@ public class MainActivity extends AppCompatActivity {
                             public void run() {
                                 if (results == null || results.getResults() == null || results.getResults().size() == 0) {
                                     Toast.makeText(MainActivity.this, "It was not possible to detect the licence plate.", Toast.LENGTH_LONG).show();
+                                    resultTextView.setVisibility(View.VISIBLE);
                                     resultTextView.setText("It was not possible to detect the licence plate.");
                                 } else {
-                                    resultTextView.setText("Plate: " + results.getResults().get(0).getPlate()
-                                            // Trim confidence to two decimal places
-                                            + "\nConfidence: " + String.format("%.2f", results.getResults().get(0).getConfidence()) + "%"
-                                            // Convert processing time to seconds and trim to two decimal places
-                                            + "\nProcessing time: " + String.format("%.2f", ((results.getProcessingTimeMs() / 1000.0) % 60)) + " seconds");
+                                    resultTextView.setVisibility(View.INVISIBLE);
+
+                                    // get license plate and accuracy
+                                    licensePlate = results.getResults().get(0).getPlate();
+                                    ocrAccuracy = results.getResults().get(0).getConfidence();
+
+                                    licensePlateText.setText("License Plate: " + licensePlate + "\nAccuracy: " + ocrAccuracy);
+
+                                    // check if we have this license in our system or not
+                                    vehiclesDatabase.addListenerForSingleValueEvent(new ValueEventListener() {
+                                        @Override
+                                        public void onDataChange(DataSnapshot dataSnapshot) {
+                                            if (dataSnapshot.hasChild(licensePlate)) {
+                                                // we have it in our system
+
+                                                // we will show their stats
+                                                timeSpentReportLinearLayout.setVisibility(View.VISIBLE);
+
+                                                // see how long they were in the parking lot for
+                                                vehiclesDatabase.child(licensePlate).addListenerForSingleValueEvent(new ValueEventListener() {
+                                                    @Override
+                                                    public void onDataChange(DataSnapshot dataSnapshot) {
+                                                        Vehicle vehicle = dataSnapshot.getValue(Vehicle.class);
+                                                        // calculate time inside (in seconds)
+                                                        long timeSpent = (System.currentTimeMillis() - vehicle.getTimeIn()) / 1000;
+                                                        double amountCharged = ((double) timeSpent / 60) / 60 * parkingRatePerHour;
+                                                        // display to screen
+                                                        Log.d(TAG, "Time spent: " + timeSpent);
+                                                        Log.d(TAG, "Amount charged: " + amountCharged);
+                                                        timeSpentText.setText("Time spent: " + String.format("%.2f", (double) timeSpent) + " seconds");
+                                                        costChargedText.setText("Amount charged: $" + String.format("%.2f", amountCharged));
+
+                                                        // remove vehicle from database
+                                                        vehiclesDatabase.child(licensePlate).setValue(null);
+
+                                                        // free a space in the lot
+                                                        increaseSpaceAvailability();
+                                                    }
+
+                                                    @Override
+                                                    public void onCancelled(DatabaseError databaseError) {
+
+                                                    }
+                                                });
+
+
+                                            } else {
+                                                // its a new vehicle. get credit card info before letting them in
+                                                creditCardLayoutPromptLinearLayout.setVisibility(View.VISIBLE);
+                                            }
+                                        }
+
+                                        @Override
+                                        public void onCancelled(DatabaseError databaseError) {
+
+                                        }
+                                    });
+
+
                                 }
                             }
                         });
@@ -115,6 +259,7 @@ public class MainActivity extends AppCompatActivity {
                         runOnUiThread(new Runnable() {
                             @Override
                             public void run() {
+                                resultTextView.setVisibility(View.VISIBLE);
                                 resultTextView.setText(resultsError.getMsg());
                             }
                         });
@@ -155,5 +300,15 @@ public class MainActivity extends AppCompatActivity {
         if (destination != null) {// Picasso does not seem to have an issue with a null value, but to be safe
             Picasso.with(MainActivity.this).load(destination).fit().centerCrop().into(imageView);
         }
+    }
+
+    public void decreaseSpaceAvailability() {
+        lot.decreaseAvailableSpots();
+        parkingLotDatabase.setValue(lot);
+    }
+
+    public void increaseSpaceAvailability() {
+        lot.increaseAvailableSpots();
+        parkingLotDatabase.setValue(lot);
     }
 }
