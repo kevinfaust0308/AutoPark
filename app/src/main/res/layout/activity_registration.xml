@@ -75,6 +75,17 @@
         android:hint="Hourly Price"
         android:padding="10dp"/>
 
+    <EditText
+        android:id="@+id/max_time_text"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Maximum Time"
+        android:inputType="numberDecimal"
+        android:maxLines="1"
+        android:padding="10dp"
+        android:textColor="@color/md_white_1000"
+        android:textColorHint="@color/md_white_1000" />
+
     <Button
         android:id="@+id/save_button"
         android:layout_width="wrap_content"

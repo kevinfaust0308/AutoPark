@@ -2,6 +2,8 @@ package com.monsoonblessing.kevinfaust.ruhacks;
 
 import android.app.Activity;
 import android.app.ProgressDialog;
+import android.content.ActivityNotFoundException;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.BitmapFactory;
@@ -11,6 +13,7 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.provider.MediaStore;
 import android.support.v4.content.ContextCompat;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
@@ -28,6 +31,9 @@ import com.google.firebase.database.ValueEventListener;
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
 import com.squareup.picasso.Picasso;
+import com.squareup.sdk.register.ChargeRequest;
+import com.squareup.sdk.register.RegisterClient;
+import com.squareup.sdk.register.RegisterSdk;
 
 import org.openalpr.OpenALPR;
 import org.openalpr.model.Results;
@@ -42,6 +48,8 @@ import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
 
+import static com.squareup.sdk.register.CurrencyCode.CAD;
+
 public class MainActivity extends AppCompatActivity {
 
     private static final int REQUEST_IMAGE = 100;
@@ -54,8 +62,8 @@ public class MainActivity extends AppCompatActivity {
     TextView resultTextView;
     @BindView(R.id.license_image)
     ImageView imageView;
-    @BindView(R.id.creditCardText)
-    TextView creditCardTextView;
+    /* @BindView(R.id.creditCardText)
+    TextView creditCardTextView;*/
     @BindView(R.id.credit_card_prompt_layout)
     LinearLayout creditCardLayoutPromptLinearLayout;
     @BindView(R.id.time_spent_report)
@@ -68,10 +76,10 @@ public class MainActivity extends AppCompatActivity {
     TextView licensePlateText;
     @BindView(R.id.lot_availability_text)
     TextView lotAvailabilityTextView;
-    @BindView(R.id.CVVText)
+    /*@BindView(R.id.CVVText)
     EditText cvvText;
     @BindView(R.id.expiryDateText)
-    EditText expiryDateText;
+    EditText expiryDateText;*/
 
     private DatabaseReference vehiclesDatabase;
     private DatabaseReference parkingLotDatabase;
@@ -82,12 +90,16 @@ public class MainActivity extends AppCompatActivity {
     // contains stuff related to parking lot like available spots and price
     private Lot lot;
 
+    // square client object
+    private RegisterClient registerClient;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         ButterKnife.bind(this);
-
+        String YOUR_CLIENT_ID = "sq0idp-KWJSh56loQYFrj_K9C0U0g";
+        registerClient = RegisterSdk.createClient(this, YOUR_CLIENT_ID);
         SharedPreferences sharedPreferences = getSharedPreferences("SmartPark", MODE_PRIVATE);
         String lotNumber = sharedPreferences.getString("lot_number", null);
 
@@ -155,7 +167,7 @@ public class MainActivity extends AppCompatActivity {
         if (lot.getAvailableSpots() == 0) {
             Toast.makeText(this, "No spots available", Toast.LENGTH_SHORT).show();
         } else {
-
+            /*
             // get credit card number, expiry, and cvv numbers
             String creditCardNum = creditCardTextView.getText().toString();
             String expiryDate = expiryDateText.getText().toString();
@@ -172,12 +184,13 @@ public class MainActivity extends AppCompatActivity {
                 card.setCardNumber(Integer.parseInt(creditCardNum));
                 card.setCardExpiry(expiryDate);
                 card.setCardSecurityNumber(Integer.parseInt(cvvNum));
+                */
 
                 // create new vehicle object and store in database
                 Vehicle v = new Vehicle();
                 v.setPlateNumber(licensePlate);
                 v.setOcrAccuracy(ocrAccuracy);
-                v.setCreditCard(card);
+                // v.setCreditCard(card);
                 v.setTimeIn(System.currentTimeMillis());
                 v.setTimeOut(null);
                 vehiclesDatabase.child(licensePlate).setValue(v);
@@ -186,9 +199,9 @@ public class MainActivity extends AppCompatActivity {
                 // valid credit card given so we can now hide the prompt
                 creditCardLayoutPromptLinearLayout.setVisibility(View.GONE);
 
+                chargeCard((int)((double) lot.getMaxTime() * lot.getHourlyCharge() * 100));     // convert to cents
                 // subtract an available spot
                 decreaseSpaceAvailability();
-            }
         }
     }
 
@@ -243,11 +256,17 @@ public class MainActivity extends AppCompatActivity {
                                                     public void onDataChange(DataSnapshot dataSnapshot) {
                                                         Vehicle vehicle = dataSnapshot.getValue(Vehicle.class);
                                                         // calculate time inside (in seconds)
+                                                        double amountCharged;
                                                         long timeSpent = (System.currentTimeMillis() - vehicle.getTimeIn()) / 1000;
-                                                        double amountCharged = ((double) timeSpent / 60) / 60 * lot.getHourlyCharge();
+                                                        if (((double) timeSpent / 60) / 60 < lot.getMaxTime()) {
+                                                            amountCharged = ((double) timeSpent / 60) / 60 * lot.getHourlyCharge();
+                                                        }
+                                                        else {
+                                                            amountCharged = (double) lot.getMaxTime() * lot.getHourlyCharge();
+                                                        }
 
 
-                                                        CreditCard card = vehicle.getCreditCard();
+                                                        // CreditCard card = vehicle.getCreditCard();
                                                         /**
                                                          *
                                                          * CHARGE CREDIT CARD
@@ -276,7 +295,7 @@ public class MainActivity extends AppCompatActivity {
 
                                             } else {
                                                 // its a new vehicle. get credit card info before letting them in
-                                                creditCardLayoutPromptLinearLayout.setVisibility(View.VISIBLE);
+//                                                creditCardLayoutPromptLinearLayout.setVisibility(View.VISIBLE);
                                             }
                                         }
 
@@ -306,6 +325,35 @@ public class MainActivity extends AppCompatActivity {
                     progress.dismiss();
                 }
             });
+        }
+        else if (requestCode == CHARGE_REQUEST_CODE) {
+          if (data == null) {
+            showDialog("Error", "Square Register was uninstalled or crashed", null);
+            return;
+          }
+
+          if (resultCode == Activity.RESULT_OK) {
+            ChargeRequest.Success success = registerClient.parseChargeSuccess(data);
+            String message = "Client transaction id: " + success.clientTransactionId;
+            showDialog("Success!", message, null);
+          } else {
+            ChargeRequest.Error error = registerClient.parseChargeError(data);
+
+            if (error.code == ChargeRequest.ErrorCode.TRANSACTION_ALREADY_IN_PROGRESS) {
+              String title = "A transaction is already in progress";
+              String message = "Please complete the current transaction in Register.";
+
+              showDialog(title, message, new DialogInterface.OnClickListener() {
+                @Override public void onClick(DialogInterface dialog, int which) {
+                  // Some errors can only be fixed by launching Register
+                  // from the Home screen.
+                  registerClient.launchRegister();
+                }
+              });
+            } else {
+              showDialog("Error: " + error.code, error.debugDescription, null);
+            }
+          }
         }
     }
 
@@ -348,5 +396,39 @@ public class MainActivity extends AppCompatActivity {
     public void increaseSpaceAvailability() {
         lot.increaseAvailableSpots();
         parkingLotDatabase.setValue(lot);
+    }
+
+    // I apologize in advance for this crappy code
+    // 1. Charge card maximum
+    // 2. TODO: give card refund upon leaving
+    private static final int CHARGE_REQUEST_CODE = 1;
+
+    /**
+    * Opens external Square Register app to charge credit card
+    * @author Kemal Ahmed
+    * @param cost in cents
+    * @return true if transaction is successful
+    */
+    public boolean chargeCard(int cost) {
+
+      ChargeRequest request = new ChargeRequest.Builder(cost, CAD).build();
+      try {
+        Intent intent = registerClient.createChargeIntent(request);
+        startActivityForResult(intent, CHARGE_REQUEST_CODE);
+      } catch (ActivityNotFoundException e) {
+        showDialog("Error", "Square Register is not installed", null);
+        registerClient.openRegisterPlayStoreListing();
+        return false;
+      }
+      return true;
+    }
+    // literally copied and pasted from here: https://docs.connect.squareup.com/articles/register-api-android
+    private void showDialog(String title, String message, DialogInterface.OnClickListener listener) {
+      Log.d("MainActivity", title + " " + message);
+      new AlertDialog.Builder(this)
+        .setTitle(title)
+        .setMessage(message)
+        .setPositiveButton(android.R.string.ok, listener)
+        .show();
     }
 }

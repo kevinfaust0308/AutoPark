@@ -21,6 +21,8 @@ public class RegistrationActivity extends AppCompatActivity {
 
     @BindView(R.id.max_spots_text)
     TextView maxSpotsTextView;
+    @BindView(R.id.max_time_text)
+    TextView maxTimeTextView;
     @BindView(R.id.hourly_price_text)
     TextView hourlyPriceTextView;
     @BindView(R.id.join_lot_text)
@@ -67,12 +69,14 @@ public class RegistrationActivity extends AppCompatActivity {
     @OnClick(R.id.save_button)
     void onSaveButton() {
         String spots = maxSpotsTextView.getText().toString();
+        String time = maxTimeTextView.getText().toString();
         String price = hourlyPriceTextView.getText().toString();
 
-        if (spots.length() != 0 && price.length() != 0) {
+        if (spots.length() != 0 && time.length() !=0 && price.length() != 0) {
             // create new lot
             Lot l = new Lot();
             l.setAvailableSpots(Integer.parseInt(spots));
+            l.setMaxTime(Integer.parseInt(time));
             l.setHourlyCharge(Double.parseDouble(price));
             l.setLotNumber(nextLotNumber);
             l.setMaxSpots(Integer.parseInt(spots));
