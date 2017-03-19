@@ -72,14 +72,14 @@
         android:id="@+id/hourly_price_text"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="Hourly Price"
+        android:hint="Hourly Price (dollars)"
         android:padding="10dp"/>
 
     <EditText
         android:id="@+id/max_time_text"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="Maximum Time"
+        android:hint="Maximum Time (hrs)"
         android:inputType="numberDecimal"
         android:maxLines="1"
         android:padding="10dp"

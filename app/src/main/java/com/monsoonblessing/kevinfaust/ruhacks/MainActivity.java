@@ -17,7 +17,6 @@ import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
-import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -121,9 +120,9 @@ public class MainActivity extends AppCompatActivity {
                 int maximumSpots = lot.getMaxSpots();
                 lotAvailabilityTextView.setText("Lot availability: " + availableSpots + " / " + maximumSpots);
 
-                if (((float) availableSpots/maximumSpots) >= 0.60) {
+                if (((float) availableSpots / maximumSpots) >= 0.60) {
                     lotAvailabilityTextView.setTextColor(ContextCompat.getColor(MainActivity.this, R.color.md_green_300));
-                } else if (((float) availableSpots/maximumSpots) >= 0.20) {
+                } else if (((float) availableSpots / maximumSpots) >= 0.20) {
                     lotAvailabilityTextView.setTextColor(ContextCompat.getColor(MainActivity.this, R.color.md_orange_500));
                 } else {
                     lotAvailabilityTextView.setTextColor(ContextCompat.getColor(MainActivity.this, R.color.md_red_600));
@@ -186,23 +185,26 @@ public class MainActivity extends AppCompatActivity {
                 card.setCardSecurityNumber(Integer.parseInt(cvvNum));
                 */
 
-                // create new vehicle object and store in database
-                Vehicle v = new Vehicle();
-                v.setPlateNumber(licensePlate);
-                v.setOcrAccuracy(ocrAccuracy);
-                // v.setCreditCard(card);
-                v.setTimeIn(System.currentTimeMillis());
-                v.setTimeOut(null);
-                vehiclesDatabase.child(licensePlate).setValue(v);
-                Toast.makeText(MainActivity.this, "Successfully registered license in system", Toast.LENGTH_SHORT).show();
+            // valid credit card given so we can now hide the prompt
+            creditCardLayoutPromptLinearLayout.setVisibility(View.GONE);
 
-                // valid credit card given so we can now hide the prompt
-                creditCardLayoutPromptLinearLayout.setVisibility(View.GONE);
-
-                chargeCard((int)((double) lot.getMaxTime() * lot.getHourlyCharge() * 100));     // convert to cents
-                // subtract an available spot
-                decreaseSpaceAvailability();
+            chargeCard((int) ((double) lot.getMaxTime() * lot.getHourlyCharge() * 100)); // convert to cents
         }
+    }
+
+    public void addLicenseToDatabase() {
+        // create new vehicle object and store in database
+        Vehicle v = new Vehicle();
+        v.setPlateNumber(licensePlate);
+        v.setOcrAccuracy(ocrAccuracy);
+        // v.setCreditCard(card);
+        v.setTimeIn(System.currentTimeMillis());
+        v.setTimeOut(null);
+        vehiclesDatabase.child(licensePlate).setValue(v);
+        Toast.makeText(MainActivity.this, "Successfully registered license in system", Toast.LENGTH_SHORT).show();
+
+        // subtract an available spot
+        decreaseSpaceAvailability();
     }
 
     @Override
@@ -260,8 +262,7 @@ public class MainActivity extends AppCompatActivity {
                                                         long timeSpent = (System.currentTimeMillis() - vehicle.getTimeIn()) / 1000;
                                                         if (((double) timeSpent / 60) / 60 < lot.getMaxTime()) {
                                                             amountCharged = ((double) timeSpent / 60) / 60 * lot.getHourlyCharge();
-                                                        }
-                                                        else {
+                                                        } else {
                                                             amountCharged = (double) lot.getMaxTime() * lot.getHourlyCharge();
                                                         }
 
@@ -272,6 +273,7 @@ public class MainActivity extends AppCompatActivity {
                                                          * CHARGE CREDIT CARD
                                                          *
                                                          */
+
 
                                                         // display to screen
                                                         Log.d(TAG, "Time spent: " + timeSpent);
@@ -295,7 +297,7 @@ public class MainActivity extends AppCompatActivity {
 
                                             } else {
                                                 // its a new vehicle. get credit card info before letting them in
-//                                                creditCardLayoutPromptLinearLayout.setVisibility(View.VISIBLE);
+                                                creditCardLayoutPromptLinearLayout.setVisibility(View.VISIBLE);
                                             }
                                         }
 
@@ -325,35 +327,38 @@ public class MainActivity extends AppCompatActivity {
                     progress.dismiss();
                 }
             });
-        }
-        else if (requestCode == CHARGE_REQUEST_CODE) {
-          if (data == null) {
-            showDialog("Error", "Square Register was uninstalled or crashed", null);
-            return;
-          }
-
-          if (resultCode == Activity.RESULT_OK) {
-            ChargeRequest.Success success = registerClient.parseChargeSuccess(data);
-            String message = "Client transaction id: " + success.clientTransactionId;
-            showDialog("Success!", message, null);
-          } else {
-            ChargeRequest.Error error = registerClient.parseChargeError(data);
-
-            if (error.code == ChargeRequest.ErrorCode.TRANSACTION_ALREADY_IN_PROGRESS) {
-              String title = "A transaction is already in progress";
-              String message = "Please complete the current transaction in Register.";
-
-              showDialog(title, message, new DialogInterface.OnClickListener() {
-                @Override public void onClick(DialogInterface dialog, int which) {
-                  // Some errors can only be fixed by launching Register
-                  // from the Home screen.
-                  registerClient.launchRegister();
-                }
-              });
-            } else {
-              showDialog("Error: " + error.code, error.debugDescription, null);
+        } else if (requestCode == CHARGE_REQUEST_CODE) {
+            if (data == null) {
+                showDialog("Error", "Square Register was uninstalled or crashed", null);
+                return;
             }
-          }
+
+            if (resultCode == Activity.RESULT_OK) {
+                ChargeRequest.Success success = registerClient.parseChargeSuccess(data);
+                String message = "Client transaction id: " + success.clientTransactionId;
+                showDialog("Success!", message, null);
+
+                // successfully charged credit card. add car to database
+                addLicenseToDatabase();
+            } else {
+                ChargeRequest.Error error = registerClient.parseChargeError(data);
+
+                if (error.code == ChargeRequest.ErrorCode.TRANSACTION_ALREADY_IN_PROGRESS) {
+                    String title = "A transaction is already in progress";
+                    String message = "Please complete the current transaction in Register.";
+
+                    showDialog(title, message, new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            // Some errors can only be fixed by launching Register
+                            // from the Home screen.
+                            registerClient.launchRegister();
+                        }
+                    });
+                } else {
+                    showDialog("Error: " + error.code, error.debugDescription, null);
+                }
+            }
         }
     }
 
@@ -404,31 +409,33 @@ public class MainActivity extends AppCompatActivity {
     private static final int CHARGE_REQUEST_CODE = 1;
 
     /**
-    * Opens external Square Register app to charge credit card
-    * @author Kemal Ahmed
-    * @param cost in cents
-    * @return true if transaction is successful
-    */
+     * Opens external Square Register app to charge credit card
+     *
+     * @param cost in cents
+     * @return true if transaction is successful
+     * @author Kemal Ahmed
+     */
     public boolean chargeCard(int cost) {
 
-      ChargeRequest request = new ChargeRequest.Builder(cost, CAD).build();
-      try {
-        Intent intent = registerClient.createChargeIntent(request);
-        startActivityForResult(intent, CHARGE_REQUEST_CODE);
-      } catch (ActivityNotFoundException e) {
-        showDialog("Error", "Square Register is not installed", null);
-        registerClient.openRegisterPlayStoreListing();
-        return false;
-      }
-      return true;
+        ChargeRequest request = new ChargeRequest.Builder(cost, CAD).build();
+        try {
+            Intent intent = registerClient.createChargeIntent(request);
+            startActivityForResult(intent, CHARGE_REQUEST_CODE);
+        } catch (ActivityNotFoundException e) {
+            showDialog("Error", "Square Register is not installed", null);
+            registerClient.openRegisterPlayStoreListing();
+            return false;
+        }
+        return true;
     }
+
     // literally copied and pasted from here: https://docs.connect.squareup.com/articles/register-api-android
     private void showDialog(String title, String message, DialogInterface.OnClickListener listener) {
-      Log.d("MainActivity", title + " " + message);
-      new AlertDialog.Builder(this)
-        .setTitle(title)
-        .setMessage(message)
-        .setPositiveButton(android.R.string.ok, listener)
-        .show();
+        Log.d("MainActivity", title + " " + message);
+        new AlertDialog.Builder(this)
+                .setTitle(title)
+                .setMessage(message)
+                .setPositiveButton(android.R.string.ok, listener)
+                .show();
     }
 }
