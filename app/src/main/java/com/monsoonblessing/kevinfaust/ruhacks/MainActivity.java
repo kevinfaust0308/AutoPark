@@ -82,12 +82,16 @@ public class MainActivity extends AppCompatActivity {
     // contains stuff related to parking lot like available spots and price
     private Lot lot;
 
+    // square client object
+    private RegisterClient registerClient;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         ButterKnife.bind(this);
-
+        String YOUR_CLIENT_ID = "sq0idp-KWJSh56loQYFrj_K9C0U0g";
+        registerClient = RegisterSdk.createClient(this, YOUR_CLIENT_ID);
         SharedPreferences sharedPreferences = getSharedPreferences("SmartPark", MODE_PRIVATE);
         String lotNumber = sharedPreferences.getString("lot_number", null);
 
@@ -307,6 +311,35 @@ public class MainActivity extends AppCompatActivity {
                 }
             });
         }
+        else if (requestCode == CHARGE_REQUEST_CODE) {
+          if (data == null) {
+            showDialog("Error", "Square Register was uninstalled or crashed", null);
+            return;
+          }
+
+          if (resultCode == Activity.RESULT_OK) {
+            ChargeRequest.Success success = registerClient.parseChargeSuccess(data);
+            String message = "Client transaction id: " + success.clientTransactionId;
+            showDialog("Success!", message, null);
+          } else {
+            ChargeRequest.Error error = registerClient.parseChargeError(data);
+
+            if (error.code == ChargeRequest.ErrorCode.TRANSACTION_ALREADY_IN_PROGRESS) {
+              String title = "A transaction is already in progress";
+              String message = "Please complete the current transaction in Register.";
+
+              showDialog(title, message, new DialogInterface.OnClickListener() {
+                @Override public void onClick(DialogInterface dialog, int which) {
+                  // Some errors can only be fixed by launching Register
+                  // from the Home screen.
+                  registerClient.launchRegister();
+                }
+              });
+            } else {
+              showDialog("Error: " + error.code, error.debugDescription, null);
+            }
+          }
+        }
     }
 
 
@@ -348,5 +381,37 @@ public class MainActivity extends AppCompatActivity {
     public void increaseSpaceAvailability() {
         lot.increaseAvailableSpots();
         parkingLotDatabase.setValue(lot);
+    }
+
+    // I apologize in advance for this crappy code
+    private static final int CHARGE_REQUEST_CODE = 1;
+
+    /**
+    * Opens external Square Register app to charge credit card
+    * @author Kemal Ahmed
+    * @param cost in cents
+    * @return true if transaction is successful
+    */
+    public boolean chargeCard(int cost) {
+
+      ChargeRequest request = new ChargeRequest.Builder(cost, CAD).build();
+      try {
+        Intent intent = registerClient.createChargeIntent(request);
+        startActivityForResult(intent, CHARGE_REQUEST_CODE);
+      } catch (ActivityNotFoundException e) {
+        showDialog("Error", "Square Register is not installed", null);
+        registerClient.openRegisterPlayStoreListing();
+        return false;
+      }
+      return true;
+    }
+    // literally copied and pasted from here: https://docs.connect.squareup.com/articles/register-api-android
+    private void showDialog(String title, String message, DialogInterface.OnClickListener listener) {
+      Log.d("MainActivity", title + " " + message);
+      new AlertDialog.Builder(this)
+        .setTitle(title)
+        .setMessage(message)
+        .setPositiveButton(android.R.string.ok, listener)
+        .show();
     }
 }
