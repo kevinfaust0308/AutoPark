@@ -14,7 +14,7 @@
     <FrameLayout
         android:layout_width="280dp"
         android:layout_height="195dp"
-        android:layout_margin="10dp">
+        android:layout_margin="15dp">
 
         <ImageView
             android:id="@+id/license_image"
@@ -43,9 +43,7 @@
         android:id="@+id/process_license_plate"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_margin="3dp"
         android:background="#00000000"
-        android:paddingTop="15dp"
         android:src="@drawable/camera"
         android:text="Process License Plate"/>
 
