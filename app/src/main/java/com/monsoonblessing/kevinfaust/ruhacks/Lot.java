@@ -9,6 +9,7 @@ public class Lot {
     private long lotNumber;
     private int availableSpots;
     private int maxSpots;
+    private int maxTime;
     private double hourlyCharge;
 
     public Lot() {
@@ -36,6 +37,14 @@ public class Lot {
 
     public void setMaxSpots(int maxSpots) {
         this.maxSpots = maxSpots;
+    }
+
+    public int getMaxTime() {
+        return maxTime;
+    }
+
+    public void setMaxTime(int maxTime) {
+        this.maxTime = maxTime;
     }
 
     public double getHourlyCharge() {

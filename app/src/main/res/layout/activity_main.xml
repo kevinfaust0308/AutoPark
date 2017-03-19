@@ -74,46 +74,6 @@
             android:layout_height="wrap_content"
             android:orientation="vertical">
 
-            <EditText
-                android:id="@+id/creditCardText"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:ems="10"
-                android:hint="Credit card number"
-                android:inputType="number"
-                android:maxLines="1"
-                android:textColor="@color/md_white_1000"
-                android:textColorHint="@color/md_white_1000"/>
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal">
-
-                <EditText
-                    android:id="@+id/expiryDateText"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:hint="mm/yy"
-                    android:maxLength="5"
-                    android:textColor="@color/md_white_1000"
-                    android:textColorHint="@color/md_white_1000"/>
-
-                <EditText
-                    android:id="@+id/CVVText"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:hint="CVV"
-                    android:inputType="number"
-                    android:maxLength="3"
-                    android:textColor="@color/md_white_1000"
-                    android:textColorHint="@color/md_white_1000"/>
-
-
-            </LinearLayout>
-
         </LinearLayout>
 
 
