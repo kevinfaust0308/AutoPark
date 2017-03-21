@@ -22,7 +22,7 @@
             android:paddingLeft="10dp"
             android:paddingRight="3dp"
             android:paddingTop="10dp"
-            android:text="Welcome to Smart"
+            android:text="Welcome to Auto"
             android:textColor="@color/md_white_1000"
             android:textSize="25sp"/>
 
