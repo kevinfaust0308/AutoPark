@@ -1,4 +1,4 @@
-# AutoPark
+# AutoPark (2nd place winners during RUHacks)
 
 > Amazon Go for Parking Lots
 
