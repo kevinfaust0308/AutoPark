@@ -2,6 +2,8 @@
 
 > Amazon Go for Parking Lots
 
+![AutoPark Logo](logo.png?raw=true)
+
 ## Problems
 
 - Kiosks and gateway employees add labour costs
